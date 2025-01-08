@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lafourgale/fx/yag/internal/help"
 	ollama "github.com/ollama/ollama/api"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -193,6 +194,106 @@ func NewCLI() *cobra.Command {
 			}.print()
 		},
 	}
+	tfCmd := &cobra.Command{
+		Use:   "tf",
+		Short: "terraform template commands",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
+		},
+	}
+	rootCmd.AddCommand(tfCmd)
+	var (
+		githubTfOptVisibilityIsPrivate *bool
+		githubTfOptName                *string
+		githubTfOptDescription         *string
+		githubTfOptOwner               *string
+	)
+	tfTerraformCmd := &cobra.Command{
+		Use:   "github",
+		Short: "populate files for defining github tf resources",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var err error
+			mainFilename := "main.tf"
+			// First check that all files to populate are not already there
+			if help.NewStat(mainFilename).IsExist() {
+				return fmt.Errorf("main.tf already exists")
+			}
+			githubModuleDir := filepath.Join("modules", "github")
+			if help.NewStat(githubModuleDir).IsDir() {
+				return fmt.Errorf("modules/github already exists")
+			}
+			githubModuleFile := filepath.Join(githubModuleDir, "repo.tf")
+			if help.NewStat(githubModuleFile).IsExist() {
+				return fmt.Errorf("modules/github/repo.tf already exists")
+			}
+			const repoTf = `
+resource "github_repository" "%[1]s" {
+  name        = "%[1]s"
+  description = "%[2]s"
+  visibility  = "%[3]s"
+}
+
+output "url" {
+  value = github_repository.yag.ssh_clone_url
+}`
+			const mainTf = `
+terraform {
+  required_providers {
+    github = {
+      source  = "integrations/github"
+      version = "6.2.2"
+    }
+  }
+}
+
+provider "github" {
+  owner = "%s"
+}
+
+module "repo" {
+  source = "./modules/github"
+}
+
+output "repo_url" {
+  value = module.repo.url
+}`
+			if err = os.MkdirAll(githubModuleDir, 0600); err != nil {
+				return fmt.Errorf("unable to create %q: %w", githubModuleDir, err)
+			}
+			var f *os.File
+			if f, err = os.Create(githubModuleFile); err != nil {
+				return fmt.Errorf("unable to create %q: %w", githubModuleFile, err)
+			}
+			var (
+				visibility  = "public"
+				description = *githubTfOptDescription
+				name        = *githubTfOptName
+			)
+			if *githubTfOptVisibilityIsPrivate {
+				visibility = "private"
+			}
+			if *githubTfOptOwner == "" || *githubTfOptName == "" {
+				return fmt.Errorf("must provide non-zero --name and --owner flags")
+			}
+			if _, err = fmt.Fprintf(f, repoTf, name, description, visibility); err != nil {
+				return fmt.Errorf("unable to write %q: %w", githubModuleFile, err)
+			}
+			if err = f.Close(); err != nil {
+				return fmt.Errorf("unable to close %q: %w", f.Name(), err)
+			}
+			if f, err = os.Create(mainFilename); err != nil {
+				return fmt.Errorf("create %q: %w", mainFilename, err)
+			}
+			if _, err = fmt.Fprintf(f, mainTf, *githubTfOptOwner); err != nil {
+				return fmt.Errorf("unable to populate main.tf: %w", err)
+			}
+			if err = f.Close(); err != nil {
+				return fmt.Errorf("unable to close %q: %w", f.Name(), err)
+			}
+			return nil
+		},
+	}
+
 	installCmd := &cobra.Command{
 		Use:     "install",
 		Aliases: []string{"i"},
