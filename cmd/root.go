@@ -234,7 +234,7 @@ resource "github_repository" "%[1]s" {
 }
 
 output "url" {
-  value = github_repository.yag.ssh_clone_url
+  value = github_repository.%[1]s.ssh_clone_url
 }`
 			const mainTf = `
 terraform {
@@ -257,7 +257,7 @@ module "repo" {
 output "repo_url" {
   value = module.repo.url
 }`
-			if err = os.MkdirAll(githubModuleDir, 0600); err != nil {
+			if err = os.MkdirAll(githubModuleDir, 0700); err != nil {
 				return fmt.Errorf("unable to create %q: %w", githubModuleDir, err)
 			}
 			var f *os.File
