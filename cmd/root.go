@@ -208,7 +208,7 @@ func NewCLI() *cobra.Command {
 		githubTfOptDescription         *string
 		githubTfOptOwner               *string
 	)
-	tfTerraformCmd := &cobra.Command{
+	tfGithubCmd := &cobra.Command{
 		Use:   "github",
 		Short: "populate files for defining github tf resources",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -293,7 +293,11 @@ output "repo_url" {
 			return nil
 		},
 	}
-
+	githubTfOptVisibilityIsPrivate = tfGithubCmd.Flags().Bool("private", false, "set private visibility for the repository")
+	githubTfOptDescription = tfGithubCmd.Flags().String("description", "", "repository description")
+	githubTfOptName = tfGithubCmd.Flags().String("name", "", "repository name (flag is required)")
+	githubTfOptOwner = tfGithubCmd.Flags().String("owner", "", "repository owner (flag is required)")
+	tfCmd.AddCommand(tfGithubCmd)
 	installCmd := &cobra.Command{
 		Use:     "install",
 		Aliases: []string{"i"},
