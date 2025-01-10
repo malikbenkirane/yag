@@ -290,6 +290,25 @@ output "repo_url" {
 			if err = f.Close(); err != nil {
 				return fmt.Errorf("unable to close %q: %w", f.Name(), err)
 			}
+			// init then apply tofu configuration
+			{
+				x := exec.CommandContext(cmd.Context(), "tofu", "init")
+				x.Stdin = os.Stdin
+				x.Stdout = os.Stdout
+				x.Stderr = os.Stderr
+				if err = x.Run(); err != nil {
+					return fmt.Errorf("tofu init: %w", err)
+				}
+			}
+			{
+				x := exec.CommandContext(cmd.Context(), "tofu", "apply")
+				x.Stdin = os.Stdin
+				x.Stdout = os.Stdout
+				x.Stderr = os.Stderr
+				if err = x.Run(); err != nil {
+					return fmt.Errorf("tofu apply: %w", err)
+				}
+			}
 			return nil
 		},
 	}
