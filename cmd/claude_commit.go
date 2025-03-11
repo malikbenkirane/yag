@@ -37,7 +37,7 @@ func newClaudeCommitCommand() *cobra.Command {
 		Short: "ask claude for a good commit message (vertexai)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			debug, err := zap.NewDevelopment()
+			debug, err := zap.NewProduction()
 			if err != nil {
 				return err
 			}
