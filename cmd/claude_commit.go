@@ -138,11 +138,11 @@ func newClaudeCommitCommand() *cobra.Command {
 			}
 			var finalCommit bytes.Buffer
 			{
-				fmt.Println()
-				fmt.Println("out", out.String())
+				// fmt.Println()
+				// fmt.Println("out", out.String())
 				valid := strings.ToValidUTF8(out.String(), "?")
 				r := strings.NewReader(valid)
-				fmt.Println(valid)
+				// fmt.Println(valid)
 				var commitMsgBody string
 				{
 					var buf bytes.Buffer
