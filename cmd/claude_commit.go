@@ -73,7 +73,7 @@ func newClaudeCommitCommand() *cobra.Command {
 					}
 					diff = string(comb)
 					debug.Debug("diff --cached pass", zap.String("diff", diff), zap.Int("len(diff)", len(diff)))
-					debug.Info("hey")
+					// debug.Info("hey")
 					if len(diff) == 0 {
 						fmt.Println("🤔 nothing to commit")
 						return nil
@@ -109,7 +109,7 @@ func newClaudeCommitCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			debug.Info("new request for vertexai api",
+			debug.Debug("new request for vertexai api",
 				zap.String("anthropic_version", payload.Version),
 				zap.String("msg", msg.String()),
 				zap.Int("max_tokens", payload.MaxTokens),
