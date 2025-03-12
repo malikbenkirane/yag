@@ -62,7 +62,7 @@ func newClaudeCommitCommand() *cobra.Command {
 			location := *vertexLocation
 			cli := http.DefaultClient
 			var url = fmt.Sprintf("https://%[2]s-aiplatform.googleapis.com/v1/projects/%[3]s/locations/%[2]s/publishers/anthropic/models/%[1]s:streamRawPredict", model, location, projectId)
-			fmt.Println("POST", url)
+			// fmt.Println("POST", url)
 			var msg claudeMsgContent
 			{
 				var diff string
@@ -73,7 +73,7 @@ func newClaudeCommitCommand() *cobra.Command {
 					}
 					diff = string(comb)
 					debug.Debug("diff --cached pass", zap.String("diff", diff), zap.Int("len(diff)", len(diff)))
-					debug.Info("hey")
+					// debug.Info("hey")
 					if len(diff) == 0 {
 						fmt.Println("🤔 nothing to commit")
 						return nil
@@ -99,17 +99,17 @@ func newClaudeCommitCommand() *cobra.Command {
 				Stream:    false,
 			}
 			var buf bytes.Buffer
-			w := io.MultiWriter(os.Stderr, &buf)
-			fmt.Println("payload:")
-			if err := json.NewEncoder(w).Encode(payload); err != nil {
+			// w := io.MultiWriter(os.Stderr, &buf)
+			// fmt.Println("payload:")
+			if err := json.NewEncoder(&buf).Encode(payload); err != nil {
 				return err
 			}
-			fmt.Println()
+			// fmt.Println()
 			req, err := http.NewRequest(http.MethodPost, url, &buf)
 			if err != nil {
 				return err
 			}
-			debug.Info("new request for vertexai api",
+			debug.Debug("new request for vertexai api",
 				zap.String("anthropic_version", payload.Version),
 				zap.String("msg", msg.String()),
 				zap.Int("max_tokens", payload.MaxTokens),
@@ -138,11 +138,11 @@ func newClaudeCommitCommand() *cobra.Command {
 			}
 			var finalCommit bytes.Buffer
 			{
-				fmt.Println()
-				fmt.Println("out", out.String())
+				// fmt.Println()
+				// fmt.Println("out", out.String())
 				valid := strings.ToValidUTF8(out.String(), "?")
 				r := strings.NewReader(valid)
-				fmt.Println(valid)
+				// fmt.Println(valid)
 				var commitMsgBody string
 				{
 					var buf bytes.Buffer
