@@ -59,23 +59,24 @@ func NewCLI() *cobra.Command {
 
 	claudeCmd := newClaudeCommand()
 	claudeCommitCmd := newClaudeCommitCommand()
-	rootCmd.AddCommand(unstageCmd, commitCmd, tagCmd, unoCmd, tsCmd, installCmd, skCmd, claudeCmd, uCmd)
+
+	rootCmd.AddCommand(
+		unstageCmd,
+		commitCmd,
+		tagCmd,
+		unoCmd,
+		tsCmd,
+		installCmd,
+		skCmd,
+		claudeCmd,
+		uCmd,
+	)
 	claudeCmd.AddCommand(claudeCommitCmd)
 	tsCmd.AddCommand(tsLittCmd)
-	yagRootCmd := &cobra.Command{
-		Use:   "root",
-		Short: "git root command",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			root, cd, err := gitRoot()
-			if err != nil {
-				return err
-			}
-			fmt.Println("root:", root)
-			fmt.Println("cdir:", cd)
-			return nil
-		},
-	}
+
+	yagRootCmd := newGitRootCommand()
 	rootCmd.AddCommand(yagRootCmd)
+
 	return rootCmd
 }
 
