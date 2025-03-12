@@ -95,7 +95,7 @@ func (fs fstat) untrackedNewFile() bool {
 }
 
 func (fs fstat) modified() bool {
-	return fs.unstaged == 'M'
+	return fs.unstaged == 'M' || fs.staged == 'M'
 }
 
 func (fs fstat) untracked() bool {

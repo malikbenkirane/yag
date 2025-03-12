@@ -23,6 +23,9 @@ func newTestSubCommand(class string, isStaged bool, isClass func(fstat) bool) *c
 				if isStaged && s.isStaged() && isClass(s) {
 					fmt.Println(s.path)
 				}
+				if !isStaged && !s.isStaged() && isClass(s) {
+					fmt.Println(s.path)
+				}
 			}
 			return nil
 		},
@@ -40,13 +43,13 @@ func newTestCommand() *cobra.Command {
 		return f.modified()
 	})
 	listUntrackedStaged := newTestSubCommand("untracked", true, func(f fstat) bool {
-		return f.untrackedNewFile()
+		return f.untracked()
 	})
 	listChangedUnstaged := newTestSubCommand("changed", false, func(f fstat) bool {
 		return f.modified()
 	})
 	listUntrackedUnstaged := newTestSubCommand("untracked", false, func(f fstat) bool {
-		return f.untrackedNewFile()
+		return f.untracked()
 	})
 	cmd.AddCommand(
 		listChangedStaged,
