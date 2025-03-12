@@ -62,7 +62,7 @@ func newClaudeCommitCommand() *cobra.Command {
 			location := *vertexLocation
 			cli := http.DefaultClient
 			var url = fmt.Sprintf("https://%[2]s-aiplatform.googleapis.com/v1/projects/%[3]s/locations/%[2]s/publishers/anthropic/models/%[1]s:streamRawPredict", model, location, projectId)
-			fmt.Println("POST", url)
+			// fmt.Println("POST", url)
 			var msg claudeMsgContent
 			{
 				var diff string
