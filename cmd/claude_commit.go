@@ -99,12 +99,12 @@ func newClaudeCommitCommand() *cobra.Command {
 				Stream:    false,
 			}
 			var buf bytes.Buffer
-			w := io.MultiWriter(os.Stderr, &buf)
-			fmt.Println("payload:")
-			if err := json.NewEncoder(w).Encode(payload); err != nil {
+			// w := io.MultiWriter(os.Stderr, &buf)
+			// fmt.Println("payload:")
+			if err := json.NewEncoder(&buf).Encode(payload); err != nil {
 				return err
 			}
-			fmt.Println()
+			// fmt.Println()
 			req, err := http.NewRequest(http.MethodPost, url, &buf)
 			if err != nil {
 				return err
