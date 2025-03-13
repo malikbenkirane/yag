@@ -34,7 +34,8 @@ func NewCLI() *cobra.Command {
 		infoOut: os.Stdout,
 	}.run
 
-	rootCmd := newRootCommand(git, out)
+	rootCmd := newRootCommand()
+	rootCmd.AddCommand(newAddCommand(git, out))
 
 	skCmd := newSkimCommand()
 
@@ -312,10 +313,129 @@ func (u printUtil) greenOnBlack() {
 	)
 }
 
-func newRootCommand(git func(args ...string) error, out io.Writer) *cobra.Command {
+func newRootCommand() *cobra.Command {
+	var lang *[]string
+	var uno *bool
 	cmd := &cobra.Command{
-		Use:   "yag -- [file]*",
-		Short: "Yet Another [Git]",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			for {
+				var unstaged, staged bytes.Buffer
+
+				x := exec.Command("yag", "test", "list_changed_unstaged")
+				x.Stdout = &unstaged
+
+				var err error
+				if err = x.Run(); err != nil {
+					return fmt.Errorf("yag list changed unstaged: %w", err)
+				}
+
+				if !*uno {
+					x = exec.Command("yag", "test", "list_untracked_unstaged")
+					x.Stdout = &unstaged
+					if err = x.Run(); err != nil {
+						return fmt.Errorf("yag list untracked unstaged: %w", err)
+					}
+				}
+
+				var sk bytes.Buffer
+
+				isLang := func(path string) bool {
+					for _, ext := range *lang {
+						if strings.HasSuffix(path, "."+ext) {
+							return true
+						}
+					}
+					return false
+				}
+
+				scanner := bufio.NewScanner(&unstaged)
+				for scanner.Scan() {
+					if !isLang(scanner.Text()) {
+						continue
+					}
+					fmt.Fprintln(&sk, scanner.Text())
+				}
+
+				{
+
+					var noteFreeStaged bytes.Buffer
+					x = exec.Command("yag", "test", "list_changed_staged")
+					x.Stdout = &noteFreeStaged
+					if err = x.Run(); err != nil {
+						return fmt.Errorf("yag list changed staged: %w", err)
+					}
+
+					if !*uno {
+						x = exec.Command("yag", "test", "list_untracked_staged")
+						x.Stdout = &noteFreeStaged
+						if err = x.Run(); err != nil {
+							return fmt.Errorf("yag list untracked staged: %w", err)
+						}
+					}
+
+					scanner := bufio.NewScanner(&noteFreeStaged)
+					for scanner.Scan() {
+						if !isLang(scanner.Text()) {
+							continue
+						}
+						fmt.Fprintln(&staged, scanner.Text(), "[u]")
+					}
+
+				}
+
+				scanner = bufio.NewScanner(&staged)
+				for scanner.Scan() {
+					fmt.Fprintln(&sk, scanner.Text())
+				}
+
+				fmt.Fprintln(&sk, "[done]")
+
+				x = exec.Command("sk")
+				x.Stdin = &sk
+
+				var out bytes.Buffer
+				x.Stdout = &out
+
+				if err = x.Run(); err != nil {
+					return err
+				}
+
+				ucmd := out.String()
+				ucmd = ucmd[:len(ucmd)-1]
+
+				switch {
+				case strings.HasSuffix(ucmd, " [u]"):
+					target := ucmd[:len(ucmd)-4]
+					x = exec.Command("yag", "unstage", target)
+					x.Stderr = os.Stderr
+					x.Stdout = os.Stdout
+					if err = x.Run(); err != nil {
+						return fmt.Errorf("yag unstage %q: %w", target, err)
+					}
+				case ucmd == "[done]":
+					return nil
+				default:
+					target := ucmd
+					x = exec.Command("git", "add", target)
+					x.Stderr = os.Stderr
+					x.Stdout = os.Stdout
+					if err = x.Run(); err != nil {
+						return fmt.Errorf("git add %q: %w", target, err)
+					}
+				}
+
+			}
+
+		},
+	}
+	lang = cmd.Flags().StringSlice("lang", []string{"go", "sum", "mod"}, "languages to filter from")
+	uno = cmd.Flags().Bool("uno", false, "skip untracked files")
+	return cmd
+}
+
+func newAddCommand(git func(args ...string) error, out io.Writer) *cobra.Command {
+	return &cobra.Command{
+		Use: "add [file]*",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) >= 1 {
 				// Check if args are existing files names.
@@ -400,5 +520,5 @@ func newRootCommand(git func(args ...string) error, out io.Writer) *cobra.Comman
 			return nil
 		},
 	}
-	return cmd
+
 }
