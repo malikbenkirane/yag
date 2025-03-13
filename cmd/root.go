@@ -60,6 +60,9 @@ func NewCLI() *cobra.Command {
 	claudeCmd := newClaudeCommand()
 	claudeCommitCmd := newClaudeCommitCommand()
 
+	testCmd := newTestCommand()
+	// TODO subsidiary test commands
+
 	rootCmd.AddCommand(
 		unstageCmd,
 		commitCmd,
@@ -70,6 +73,7 @@ func NewCLI() *cobra.Command {
 		skCmd,
 		claudeCmd,
 		uCmd,
+		testCmd,
 	)
 	claudeCmd.AddCommand(claudeCommitCmd)
 	tsCmd.AddCommand(tsLittCmd)
@@ -91,7 +95,7 @@ func (fs fstat) untrackedNewFile() bool {
 }
 
 func (fs fstat) modified() bool {
-	return fs.unstaged == 'M'
+	return fs.unstaged == 'M' || fs.staged == 'M'
 }
 
 func (fs fstat) untracked() bool {
